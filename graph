@@ -1,0 +1,75 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import logging as lg
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import SGDRegressor
+
+# Load dataset
+df = pd.read_csv("https://github.com/77EminSarac77/Dataset-for-Linear-Regression/blob/main/Diabetespred.csv?raw=true")
+
+# Define features and target
+X = df.drop('Outcome', axis=1)
+Y = df['Outcome']
+
+# Standardize the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the data into training and testing sets
+X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.2, random_state=5)
+
+model = SGDRegressor(alpha=0.001, eta0=0.0001, max_iter=5000, tol=0.000001)
+model.fit(X_train, Y_train)
+# List to store the RMSE values and number of iterations
+rmse_values = []
+iterations = []
+
+n_iterations = 1000
+for i in range(1, n_iterations + 1):
+    model.fit(X_train, Y_train)
+    y_train_predict = model.predict(X_train)
+    rmse = np.sqrt(mean_squared_error(Y_train, y_train_predict))
+    rmse_values.append(rmse)
+    iterations.append(i)
+
+# Plot the RMSE against the number of iterations
+plt.figure(figsize=(10, 6))
+plt.plot(iterations, rmse_values, label='RMSE')
+plt.xlabel('Number of Iterations')
+plt.ylabel('RMSE')
+plt.title('RMSE vs Number of Iterations')
+plt.legend()
+plt.show()
+
+# Evaluate the model on the training set
+y_train_predict = model.predict(X_train)
+train_rmse = np.sqrt(mean_squared_error(Y_train, y_train_predict))
+train_r2 = r2_score(Y_train, y_train_predict)
+
+# Evaluate the model on the testing set
+y_test_predict = model.predict(X_test)
+test_rmse = np.sqrt(mean_squared_error(Y_test, y_test_predict))
+test_r2 = r2_score(Y_test, y_test_predict)
+
+# Output model performance
+print("The model performance for the training set")
+print("------------------------------------------")
+print(f'RMSE: {train_rmse}')
+print(f'R2 score: {train_r2}\n')
+
+print("The model performance for the testing set")
+print("-----------------------------------------")
+print(f'RMSE: {test_rmse}')
+print(f'R2 score: {test_r2}')
+
+
+# Generating log file (the code for this will be commented so that it doesn't add anything to the log file that
+# I turned in while the TA runs my code)
+lg.basicConfig(filename="part2.log", level=lg.INFO)
+
+lg.info('\n' + 'tolerance: ' + str(model.tol) + '\n' + 'max iterations: ' + str(model.max_iter) + '\n' + 'learning rate: ' +
+        str(model.alpha) + '\n' + 'Training Error: ' + str(train_rmse) + '\n' + 'Test Error: ' + str(test_rmse))
+
